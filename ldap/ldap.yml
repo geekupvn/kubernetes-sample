@@ -60,7 +60,7 @@ spec:
       volumes:
           - name: ldap-data 
             persistentVolumeClaim:
-              clainName: gu-ldap-volume
+              claimName: gu-ldap-volume
 
 ---
 apiVersion: v1
