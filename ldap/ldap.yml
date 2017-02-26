@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: gu-ldap-nfs
+  labels:
+    volume: gu-ldap-nfs
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    # FIXME: use the right IP from service
+    server: {{ X.X.X.X }}
+    path: "/exports"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: gu-ldap-volume
+spec:
+  selector:
+    matchLabels:
+      volume: gu-ldap-nfs
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: gu-ldap
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: gu-ldap
+    spec:
+      containers:
+      - name: openldap
+        image: osixia/openldap
+        ports:
+          - containerPort: 389
+          - containerPort: 636
+      - name: phpldapadmin
+        image: osixia/phpldapadmin
+        ports:
+          - containerPort: 80
+        env:
+          - name: PHPLDAPADMIN_HTTPS
+            value: "false"
+          - name: PHPLDAPADMIN_LDAP_HOSTS
+            value: localhost
+        volumeMounts:
+          - name: ldap-data
+            mountPath: "/var/lib/ldap"
+      volumes:
+          - name: ldap-data 
+            persistentVolumeClaim:
+              clainName: gu-ldap-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gu-ldap
+spec:
+  ports:
+  - name: ldap
+    port: 389
+    targetPort: 389
+  - name: ldap-ssl
+    port: 636
+    targetPort: 636
+  selector:
+    app: gu-ldap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gu-ldap-admin
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: gu-ldap
