@@ -7,7 +7,7 @@ spec:
   template:
     metadata:
       labels:
-        app: jupyterhub-nfs
+        app: gu-nfs
     spec:
       containers:
       - name: nfs-server
