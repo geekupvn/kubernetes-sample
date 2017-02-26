@@ -24,6 +24,8 @@ spec:
         volumeMounts:
           - name: mypvc
             mountPath: /exports
+      nodeSelector:
+          gu_node_name: nfs
       volumes:
         - name: mypvc
           hostPath:
